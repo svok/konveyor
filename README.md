@@ -8,7 +8,7 @@ style.
 ## What is the conveyor belt design pattern
 
 The purpose of this pattern is designing of applications with complex but elastic logics. The elasticity 
-of the pattern allows easily add/remove functionality without rebuilding of entire application.
+of the pattern allows easily add/remove functionality without redesigning of entire application.
 
 The central structure of the conveyor belt pattern is a Context containing all states of the workflow 
 process. Suppose we have to handle a user request. Then, our Context must include the following entities.
