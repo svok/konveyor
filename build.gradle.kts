@@ -1,6 +1,7 @@
 plugins {
     kotlin("multiplatform") version "1.3.20"
     id("io.gitlab.arturbosch.detekt") version "1.0.0-RC12"
+    id("jacoco")
 }
 
 repositories {
@@ -11,6 +12,28 @@ version = "0.0.1"
 
 apply {
     plugin("maven-publish")
+}
+
+tasks {
+    val codeCoverageReport by registering(JacocoReport::class) {
+
+        executionData.from(fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec"))
+
+//        sourceSets {
+//            subprojects.map { it.sourceSets["main"] }
+//        }
+
+        reports {
+            xml.isEnabled = true
+            xml.destination = File("${buildDir}/reports/jacoco/report.xml")
+            html.isEnabled = false
+            csv.isEnabled = false
+        }
+    }
+
+    codeCoverageReport {
+        dependsOn(build)
+    }
 }
 
 kotlin {
