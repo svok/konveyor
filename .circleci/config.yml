@@ -61,7 +61,7 @@ jobs:
           key: v2-dependencies-{{ checksum "build.gradle.kts" }}
 
       - codecov/upload:
-          file: "build/jacoco/*"
+          file: build/reports/jacoco/report.xml
 
 
   test:
