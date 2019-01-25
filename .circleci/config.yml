@@ -4,7 +4,10 @@ defaults: &workdirAndImage
   docker:
     - image: circleci/openjdk:8-jdk
 
-version: 2
+orbs:
+  codecov: codecov/codecov@1.0.3
+
+version: 2.1
 
 # 1) jobs defined here are going to be used in workflows (pipeline). You can treat jobs as steps in workflow/pipeline
 # 2) jobs in workflow are run in SEPARATE docker containers, so techniques like caching or storing to workspace is a common thing
@@ -56,6 +59,9 @@ jobs:
             - ~/.gradle
             - ~/.m2
           key: v2-dependencies-{{ checksum "build.gradle.kts" }}
+
+      - codecov/upload:
+          file: "build/jacoco/*"
 
 
   test:
@@ -115,7 +121,7 @@ jobs:
 
 # lets define workflow
 workflows:
-  version: 2
+  version: 2.1
 
   # workflow name
   build_test_and_deploy:
