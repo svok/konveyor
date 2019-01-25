@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/spectrum-project/konveyor.svg?style=svg)](https://circleci.com/gh/spectrum-project/konveyor)
+
 # konveyor ETL Processor
 
 ## Description
