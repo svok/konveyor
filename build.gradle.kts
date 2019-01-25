@@ -70,6 +70,13 @@ kotlin {
         val linuxTest by getting {
         }
 
+//        val testAll by getting {
+//            dependsOn(commonTest)
+//            dependsOn(jsTest)
+//            dependsOn(jvmTest)
+//            dependsOn(linuxTest)
+//        }
+
         all {
             languageSettings.apply {
                 progressiveMode = true

@@ -5,8 +5,8 @@
       <configuration version="3" platform="JavaScript " useProjectSettings="false" isTestModule="true" externalProjectId="konveyor">
         <sourceSets>
           <sourceSet>codes.spectrum.konveyor.konveyor.commonMain</sourceSet>
-          <sourceSet>codes.spectrum.konveyor.konveyor.jsMain</sourceSet>
           <sourceSet>codes.spectrum.konveyor.konveyor.commonTest</sourceSet>
+          <sourceSet>codes.spectrum.konveyor.konveyor.jsMain</sourceSet>
         </sourceSets>
         <newMppModelJpsModuleKind>COMPILATION_AND_SOURCE_SET_HOLDER</newMppModelJpsModuleKind>
         <compilerSettings>

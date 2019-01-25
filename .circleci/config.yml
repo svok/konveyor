@@ -47,7 +47,8 @@ jobs:
             - v2-dependencies-
 
       # build but skip tests
-      - run: gradle build -x test
+#      - run: gradle build -x test
+      - run: gradle build
 
       # after performing build lets store dependencies and build artifacts
       - save_cache:
@@ -128,9 +129,9 @@ workflows:
           requires:
             - checkout_code
       # run tests after build
-      - test:
-          requires:
-            - build
+#      - test:
+#          requires:
+#            - build
 
       # after we are sure the tests are passing, lets push Docker image.
       # we want to do it only for 'master' branch
