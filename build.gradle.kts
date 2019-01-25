@@ -1,5 +1,6 @@
 plugins {
     kotlin("multiplatform") version "1.3.20"
+    id("io.gitlab.arturbosch.detekt") version "1.0.0-RC12"
 }
 
 repositories {
