@@ -32,7 +32,7 @@ tasks {
     }
 
     codeCoverageReport {
-        dependsOn(build)
+        dependsOn("test")
     }
 }
 
