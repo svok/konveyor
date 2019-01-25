@@ -1,3 +1,13 @@
+
+![](https://img.shields.io/github/issues/spectrum-project/konveyor.svg)
+![](https://img.shields.io/github/forks/spectrum-project/konveyor.svg)
+![](https://img.shields.io/github/stars/spectrum-project/konveyor.svg)
+![](https://img.shields.io/github/license/spectrum-project/konveyor.svg)
+
+![](https://img.shields.io/circleci/project/github/spectrum-project/konveyor/master.svg?label=master&style=plastic)
+![](https://img.shields.io/circleci/project/github/spectrum-project/konveyor/dev.svg?label=dev&style=plastic)
+[![Coverage Status](https://coveralls.io/repos/github/spectrum-project/konveyor/badge.svg)](https://coveralls.io/github/spectrum-project/konveyor)
+
 # konveyor ETL Processor
 
 ## Description
