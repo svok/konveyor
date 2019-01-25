@@ -1,4 +1,12 @@
-[![CircleCI](https://circleci.com/gh/spectrum-project/konveyor.svg?style=svg)](https://circleci.com/gh/spectrum-project/konveyor)
+
+![](https://img.shields.io/github/issues/spectrum-project/konveyor.svg)
+![](https://img.shields.io/github/forks/spectrum-project/konveyor.svg)
+![](https://img.shields.io/github/stars/spectrum-project/konveyor.svg)
+![](https://img.shields.io/github/license/spectrum-project/konveyor.svg)
+
+![](https://img.shields.io/circleci/project/github/spectrum-project/konveyor/master.svg?label=master&style=plastic)
+![](https://img.shields.io/circleci/project/github/spectrum-project/konveyor/dev.svg?label=dev&style=plastic)
+
 
 # konveyor ETL Processor
 
