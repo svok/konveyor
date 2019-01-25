@@ -1,0 +1,142 @@
+# lets define default values for jobs and give it a name 'workdirAndImage'
+defaults: &workdirAndImage
+  working_directory: ~/workspace
+  docker:
+    - image: circleci/openjdk:8-jdk
+
+version: 2
+
+# 1) jobs defined here are going to be used in workflows (pipeline). You can treat jobs as steps in workflow/pipeline
+# 2) jobs in workflow are run in SEPARATE docker containers, so techniques like caching or storing to workspace is a common thing
+# 3) jobs don't have to be run within a workflow, they can be run separately, see CircleCI documentation for that
+jobs:
+
+  checkout_code:
+    #apply defaults defined at the top of the config (working dir + docker image)
+    <<: *workdirAndImage
+
+    #here we are defining steps for given job/step
+    steps:
+      # checkout is a built-in step which simply pulls git repository. path parameter is optional
+      - checkout:
+          path: ~/workspace/repo
+
+      # we checked out the code in the previous stepw, lets store it to the workspace
+      - persist_to_workspace:
+          root: ~/workspace
+          paths:
+            - repo/
+
+  build:
+    # restore defaults named 'workdirAndImage'
+    <<: *workdirAndImage
+    # override working directory (its defined as ~/workspace in 'workdirAndImage'), we want work on checked out code
+    working_directory: ~/workspace/repo
+
+    steps:
+      # restore workspace - in checkout_code step we persisted checked out code under ~/workspace/repo
+      - attach_workspace:
+          at: ~/workspace
+      # restore cache (saving it is at the end of this job), it contains downloaded dependencies + build artifacts.
+      - restore_cache:
+          keys:
+            # this key relates to build.gradle. If this file has not been changed since the last build, cache will be used
+            # {{ checksum "build.gradle" }} simply tells Circle CI to calculate checksum from build.gradle
+            - v2-dependencies-{{ checksum "build.gradle.kts" }}
+            # fallback to using the latest cache if no exact match is found
+            - v2-dependencies-
+
+      # build but skip tests
+      - run: gradle build -x test
+
+      # after performing build lets store dependencies and build artifacts
+      - save_cache:
+          paths:
+            - ~/.gradle
+            - ~/.m2
+          key: v2-dependencies-{{ checksum "build.gradle.kts" }}
+
+
+  test:
+    <<: *workdirAndImage
+    working_directory: ~/workspace/repo
+
+    steps:
+      - attach_workspace:
+          at: ~/workspace
+      # before running tests, lets restore cache with dependencies and artifacts
+      - restore_cache:
+          keys:
+            - v2-dependencies-{{ checksum "build.gradle.kts" }}
+            # fallback to using the latest cache if no exact match is found
+            - v2-dependencies-
+
+      # run tests
+      - run: gradle test
+
+      # save test reports in ~/junit dir
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/junit/
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
+          when: always
+
+      # let CircleCI know where test results are, so there are available on UI after a build
+      - store_test_results:
+          path: ~/junit
+
+      # in case you want to have access to reports later
+      - store_artifacts:
+          path: ~/junit
+
+
+  push_docker_image:
+    <<: *workdirAndImage
+    working_directory: ~/workspace/repo
+
+
+    steps:
+      - attach_workspace:
+          at: ~/workspace
+
+      # this step setups docker deamon, so we can use it later
+      - setup_remote_docker
+      - restore_cache:
+          keys:
+            - v2-dependencies-{{ checksum "build.gradle.kts" }}
+            # fallback to using the latest cache if no exact match is found
+            - v2-dependencies-
+
+      # lets build and push docker with version calculated using git tags
+      # this gradle task performs 'docker login ...' and 'docker push ...' commands
+      - run: gradle pushDockerWithGitVersion
+
+# lets define workflow
+workflows:
+  version: 2
+
+  # workflow name
+  build_test_and_deploy:
+
+    #define jobs within the workflow
+    jobs:
+      - checkout_code
+
+      # because we need to run build after checking out the code, we need to add 'requires' attribute
+      - build:
+          requires:
+            - checkout_code
+      # run tests after build
+      - test:
+          requires:
+            - build
+
+      # after we are sure the tests are passing, lets push Docker image.
+      # we want to do it only for 'master' branch
+#      - push_docker_image:
+#          requires:
+#            - test
+#          filters:
+#            branches:
+#              only: master
