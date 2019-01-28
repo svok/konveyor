@@ -1,12 +1,21 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+}
+
 plugins {
     kotlin("multiplatform") version "1.3.20"
-    id("io.gitlab.arturbosch.detekt") version "1.0.0-RC12"
+    id("io.gitlab.arturbosch.detekt") version "1.0.0-RC11"
     id("jacoco")
 }
 
 repositories {
     mavenCentral()
+    jcenter()
 }
+
 group = "codes.spectrum.konveyor"
 version = "0.0.1"
 
@@ -14,25 +23,38 @@ apply {
     plugin("maven-publish")
 }
 
-tasks {
-    val codeCoverageReport by registering(JacocoReport::class) {
-
-        executionData.from(fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec"))
-
-//        sourceSets {
-//            subprojects.map { it.sourceSets["main"] }
-//        }
-
-        reports {
-            xml.isEnabled = true
-            xml.destination = File("${buildDir}/reports/jacoco/report.xml")
-            html.isEnabled = false
-            csv.isEnabled = false
+val userHome = System.getProperty("user.home")
+detekt {
+    toolVersion = "1.0.0-RC11"                             // Version of the Detekt CLI that will be used. When unspecified the latest detekt version found will be used. Override to stay on the same version.
+    input = files(                                        // The directories where detekt looks for input files. Defaults to `files("src/main/java", "src/main/kotlin")`.
+        "src/commonMain/kotlin",
+        "src/jvmMain/kotlin",
+        "src/jsMain/kotlin",
+        "src/linuxMain/kotlin"
+    )
+    parallel = false                                      // Builds the AST in parallel. Rules are always executed in parallel. Can lead to speedups in larger projects. `false` by default.
+    config = files("detekt/config.yml")                  // Define the detekt configuration(s) you want to use. Defaults to the default detekt configuration.
+    baseline = file("detekt/baseline.xml")               // Specifying a baseline file. All findings stored in this file in subsequent runs of detekt.
+    filters = ""                                          // Regular expression of paths that should be excluded separated by `;`.
+    disableDefaultRuleSets = false                        // Disables all default detekt rulesets and will only run detekt with custom rules defined in `plugins`. `false` by default.
+//    plugins = "other/optional/ruleset.jar"                // Additional jar file containing custom detekt rules.
+    debug = false                                         // Adds debug output during task execution. `false` by default.
+    reports {
+        xml {
+            enabled = true                                // Enable/Disable XML report (default: true)
+            destination = file("build/reports/detekt.xml")  // Path where XML report will be stored (default: `build/reports/detekt/detekt.xml`)
+        }
+        html {
+            enabled = true                                // Enable/Disable HTML report (default: true)
+            destination = file("build/reports/detekt.html") // Path where HTML report will be stored (default: `build/reports/detekt/detekt.html`)
         }
     }
-
-    codeCoverageReport {
-        dependsOn("build")
+    idea {
+        path = "$userHome/idea"
+        codeStyleScheme = "$userHome/idea/idea-code-style.xml"
+        inspectionsProfile = "$userHome/idea/inspect.xml"
+        report = "$project.projectDir/reports"
+        mask = "*.kt,"
     }
 }
 
