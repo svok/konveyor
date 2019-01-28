@@ -7,8 +7,8 @@ buildscript {
 
 plugins {
     kotlin("multiplatform") version "1.3.20"
-    id("io.gitlab.arturbosch.detekt") version "1.0.0-RC11"
-    id("jacoco")
+    id("io.gitlab.arturbosch.detekt") version "1.0.0-RC12"
+    jacoco
 }
 
 repositories {
@@ -25,7 +25,7 @@ apply {
 
 val userHome = System.getProperty("user.home")
 detekt {
-    toolVersion = "1.0.0-RC11"                             // Version of the Detekt CLI that will be used. When unspecified the latest detekt version found will be used. Override to stay on the same version.
+    toolVersion = "1.0.0-RC12"                             // Version of the Detekt CLI that will be used. When unspecified the latest detekt version found will be used. Override to stay on the same version.
     input = files(                                        // The directories where detekt looks for input files. Defaults to `files("src/main/java", "src/main/kotlin")`.
         "src/commonMain/kotlin",
         "src/jvmMain/kotlin",
@@ -56,6 +56,10 @@ detekt {
         report = "$project.projectDir/reports"
         mask = "*.kt,"
     }
+}
+
+jacoco {
+    toolVersion = "0.8.3"
 }
 
 kotlin {
@@ -116,12 +120,29 @@ kotlin {
         val linuxTest by getting {
         }
 
-//        val testAll by getting {
-//            dependsOn(commonTest)
-//            dependsOn(jsTest)
-//            dependsOn(jvmTest)
-//            dependsOn(linuxTest)
-//        }
+        tasks {
+
+            val codeCoverageReport by creating(JacocoReport::class) {
+                group = "verification"
+                executionData(fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec"))
+
+                classDirectories.setFrom(
+                    files("${buildDir}/classes/kotlin/js/main"),
+                    files("${buildDir}/classes/kotlin/jvm/main"),
+                    files("${buildDir}/classes/kotlin/linux/main")
+                )
+                reports {
+                    xml.isEnabled = true
+                    xml.destination = File("$buildDir/reports/jacoco/report.xml")
+                    html.isEnabled = false
+                    html.destination = File("$buildDir/reports/jacoco/report.html")
+                    csv.isEnabled = false
+                }
+
+                dependsOn("check")
+            }
+
+        }
 
         all {
             languageSettings.apply {
