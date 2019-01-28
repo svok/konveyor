@@ -62,6 +62,33 @@ jacoco {
     toolVersion = "0.8.3"
 }
 
+tasks {
+
+    val codeCoverageReport by creating(JacocoReport::class) {
+        group = "verification"
+        dependsOn()
+        executionData(fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec"))
+
+        classDirectories.setFrom(
+            files("${buildDir}/classes/kotlin/js/main"),
+            files("${buildDir}/classes/kotlin/jvm/main"),
+            files("${buildDir}/classes/kotlin/linux/main")
+        )
+        reports {
+            xml.isEnabled = true
+            xml.destination = File("$buildDir/reports/jacoco/report.xml")
+            html.isEnabled = false
+            html.destination = File("$buildDir/reports/jacoco/report.html")
+            csv.isEnabled = false
+        }
+
+    }
+    check {
+        dependsOn(codeCoverageReport)
+    }
+}
+
+
 kotlin {
     jvm {
         val main by compilations.getting {
@@ -118,30 +145,6 @@ kotlin {
         val linuxMain by getting {
         }
         val linuxTest by getting {
-        }
-
-        tasks {
-
-            val codeCoverageReport by creating(JacocoReport::class) {
-                group = "verification"
-                executionData(fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec"))
-
-                classDirectories.setFrom(
-                    files("${buildDir}/classes/kotlin/js/main"),
-                    files("${buildDir}/classes/kotlin/jvm/main"),
-                    files("${buildDir}/classes/kotlin/linux/main")
-                )
-                reports {
-                    xml.isEnabled = true
-                    xml.destination = File("$buildDir/reports/jacoco/report.xml")
-                    html.isEnabled = false
-                    html.destination = File("$buildDir/reports/jacoco/report.html")
-                    csv.isEnabled = false
-                }
-
-                dependsOn("check")
-            }
-
         }
 
         all {
