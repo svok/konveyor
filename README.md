@@ -6,7 +6,7 @@
 
 ![](https://img.shields.io/circleci/project/github/spectrum-project/konveyor/master.svg?label=master&style=plastic)
 ![](https://img.shields.io/circleci/project/github/spectrum-project/konveyor/dev.svg?label=dev&style=plastic)
-![](https://img.shields.io/codecov/c/github/spectrum-proj/koveyor/master.svg)
+[![codecov](https://codecov.io/gh/spectrum-project/konveyor/branch/master/graph/badge.svg)](https://codecov.io/gh/spectrum-project/konveyor)
 # konveyor ETL Processor
 
 ## Description
