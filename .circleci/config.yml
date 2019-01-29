@@ -49,9 +49,10 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v2-dependencies-
 
-      # build but skip tests
-#      - run: gradle build -x test
       - run: gradle build
+      - run: gradle check
+          - codecov/upload:
+              file: build/reports/jacoco/report.xml
 
       # after performing build lets store dependencies and build artifacts
       - save_cache:
@@ -169,9 +170,6 @@ workflows:
           requires:
             - checkout_code
 
-      - detekt:
-          requires:
-            - build
       # run tests after build
 #      - test:
 #          requires:
