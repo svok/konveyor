@@ -29,8 +29,8 @@ detekt {
     input = files(                                        // The directories where detekt looks for input files. Defaults to `files("src/main/java", "src/main/kotlin")`.
         "src/commonMain/kotlin",
         "src/jvmMain/kotlin",
-        "src/jsMain/kotlin",
-        "src/linuxMain/kotlin"
+        "src/jsMain/kotlin"
+        // "src/linuxMain/kotlin"
     )
     parallel = false                                      // Builds the AST in parallel. Rules are always executed in parallel. Can lead to speedups in larger projects. `false` by default.
     config = files("detekt/config.yml")                  // Define the detekt configuration(s) you want to use. Defaults to the default detekt configuration.
@@ -103,49 +103,56 @@ kotlin {
 
         compilations["test"].runtimeDependencyFiles // get the test runtime classpath
     }
-    js()
+    //js()
     // For ARM, should be changed to iosArm32 or iosArm64
     // For Linux, should be changed to e.g. linuxX64
     // For MacOS, should be changed to e.g. macosX64
     // For Windows, should be changed to e.g. mingwX64
-    linuxX64("linux")
+    // linuxX64("linux")
+
     sourceSets {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.1.1")
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.1.1")
             }
         }
         val jvmMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-jdk8"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1")
             }
         }
         val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1")
             }
         }
-        val jsMain by getting {
-            dependencies {
-                implementation(kotlin("stdlib-js"))
-            }
-        }
-        val jsTest by getting {
-            dependencies {
-                implementation(kotlin("test-js"))
-            }
-        }
-        val linuxMain by getting {
-        }
-        val linuxTest by getting {
-        }
+//        val jsMain by getting {
+//            dependencies {
+//                implementation(kotlin("stdlib-js"))
+//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1")
+//            }
+//        }
+//        val jsTest by getting {
+//            dependencies {
+//                implementation(kotlin("test-js"))
+//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1")
+//            }
+//        }
+        // val linuxMain by getting {
+        // }
+        // val linuxTest by getting {
+        // }
 
         all {
             languageSettings.apply {
