@@ -215,6 +215,7 @@ tasks {
 //        key = project.findProperty("bintrayKey")?.toString() ?: ""
         user = System.getenv("bintrayUser")?.toString() ?: ""
         key = System.getenv("bintrayKey")?.toString() ?: ""
+        override = true
         println("User = $user")
         setPublications("mavenJava")
 
