@@ -172,35 +172,24 @@ Add dependencies (you can also add other modules that you need):
 
 ```xml
 <dependency>
-    <groupId>org.jetbrains.kotlinx</groupId>
-    <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>1.1.1</version>
+	<groupId>codes.spectrum</groupId>
+	<artifactId>konveyor</artifactId>
+	<version>0.0.1</version>
+	<type>pom</type>
 </dependency>
 ```
-And make sure that you use the latest Kotlin version:
 
-```xml
-<properties>
-    <kotlin.version>1.3.20</kotlin.version>
-</properties>
-```
 ### Gradle
 
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
 dependencies {
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1'
+    compile 'codes.spectrum:konveyor:0.0.1'
 }
 ```
-And make sure that you use the latest Kotlin version:
 
-```groovy
-buildscript {
-    ext.kotlin_version = '1.3.20'
-}
-```
-Make sure that you have either jcenter() or mavenCentral() in the list of repositories:
+Make sure that you have jcenter() in the list of repositories:
 
 ```groovy
 repository {
@@ -213,15 +202,6 @@ Add dependencies (you can also add other modules that you need):
 
 ```kotlin
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1")
+    implementation("codes.spectrum:konveyor:0.0.1")
 }
 ```
-And make sure that you use the latest Kotlin version:
-
-```kotlin
-plugins {
-    kotlin("jvm") version "1.3.20"
-}
-```
-Make sure that you have either jcenter() or mavenCentral() in the list of repositories.
-
