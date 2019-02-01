@@ -51,6 +51,7 @@ jobs:
 
       - run: gradle build
       - run: gradle check
+      - run: gradle publish
       - codecov/upload:
           file: build/reports/jacoco/report.xml
 
@@ -63,74 +64,6 @@ jobs:
 
 #      - codecov/upload:
 #          file: build/reports/jacoco/report.xml
-
-
-  detekt:
-    # restore defaults named 'workdirAndImage'
-    <<: *workdirAndImage
-    # override working directory (its defined as ~/workspace in 'workdirAndImage'), we want work on checked out code
-    working_directory: ~/workspace/repo
-
-    steps:
-      # restore workspace - in checkout_code step we persisted checked out code under ~/workspace/repo
-      - attach_workspace:
-          at: ~/workspace
-      # restore cache (saving it is at the end of this job), it contains downloaded dependencies + build artifacts.
-      - restore_cache:
-          keys:
-            # this key relates to build.gradle. If this file has not been changed since the last build, cache will be used
-            # {{ checksum "build.gradle" }} simply tells Circle CI to calculate checksum from build.gradle
-            - v2-dependencies-{{ checksum "build.gradle.kts" }}
-            # fallback to using the latest cache if no exact match is found
-            - v2-dependencies-
-
-      # build but skip tests
-#      - run: gradle build -x test
-      - run: gradle check
-
-      # after performing build lets store dependencies and build artifacts
-      - save_cache:
-          paths:
-            - ~/.gradle
-            - ~/.m2
-          key: v2-dependencies-{{ checksum "build.gradle.kts" }}
-
-      - codecov/upload:
-          file: build/reports/jacoco/report.xml
-
-
-  test:
-    <<: *workdirAndImage
-    working_directory: ~/workspace/repo
-
-    steps:
-      - attach_workspace:
-          at: ~/workspace
-      # before running tests, lets restore cache with dependencies and artifacts
-      - restore_cache:
-          keys:
-            - v2-dependencies-{{ checksum "build.gradle.kts" }}
-            # fallback to using the latest cache if no exact match is found
-            - v2-dependencies-
-
-      # run tests
-      - run: gradle test
-
-      # save test reports in ~/junit dir
-      - run:
-          name: Save test results
-          command: |
-            mkdir -p ~/junit/
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
-          when: always
-
-      # let CircleCI know where test results are, so there are available on UI after a build
-      - store_test_results:
-          path: ~/junit
-
-      # in case you want to have access to reports later
-      - store_artifacts:
-          path: ~/junit
 
 
   push_docker_image:
