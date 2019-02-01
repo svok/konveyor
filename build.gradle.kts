@@ -27,7 +27,7 @@ repositories {
     jcenter()
 }
 
-group = "codes.spectrum.konveyor"
+group = "codes.spectrum"
 version = "0.0.1"
 
 //apply {
@@ -192,27 +192,16 @@ tasks {
                             email.set("sokatov@gmail.com")
                         }
                     }
-                    scm {
-                        connection.set("scm:git:git://example.com/my-library.git")
-                        developerConnection.set("scm:git:ssh://example.com/my-library.git")
-                        url.set("http://example.com/my-library/")
-                    }
+//                    scm {
+//                        connection.set("scm:git:git://example.com/my-library.git")
+//                        developerConnection.set("scm:git:ssh://example.com/my-library.git")
+//                        url.set("http://example.com/my-library/")
+//                    }
                 }
 //                from(components)
                 artifact(sourcesJar)
                 artifact(dokkaJar)
             }
-//            mavenJava(MavenPublication) {
-//                from components.java
-//                        afterEvaluate {
-//                            artifact testsJar
-//                                    artifact sourcesJar
-//                                    artifact javadocJar
-//
-//                                    pom.withXml(pomXmlModifier)
-//                        }
-//            }
-
         }
         repositories {
             maven {
@@ -222,15 +211,33 @@ tasks {
     }
 
     bintray {
-        user = project.findProperty("bintrayUser")?.toString() ?: ""
-        key = project.findProperty("bintrayKey")?.toString() ?: ""
+//        user = project.findProperty("bintrayUser")?.toString() ?: ""
+//        key = project.findProperty("bintrayKey")?.toString() ?: ""
+        user = System.getenv("bintrayUser")?.toString() ?: ""
+        key = System.getenv("bintrayKey")?.toString() ?: ""
+        println("User = $user")
         setPublications("mavenJava")
 
         pkg( closureOf<BintrayExtension.PackageConfig> {
-            repo = "maven"
+            repo = "konveyor"
             name = "konveyor"
+            desc = "Conveyor belt software design pattern in a kotlin DSL-like style"
+            userOrg = "spectrum-project"
+            websiteUrl = "https://github.com/spectrum-project/konveyor"
+            issueTrackerUrl = "https://github.com/spectrum-project/konveyor/issues"
             vcsUrl = "git@github.com:spectrum-project/konveyor.git"
+            githubRepo = "spectrum-project/konveyor"
+            githubReleaseNotesFile = "CHANGELOG.md"
             setLicenses("Apache-2.0")
+            setLabels(
+                "conveyor",
+                "conveyor-belt",
+                "processor",
+                "workflow",
+                "kotlin",
+                "kotlin dsl",
+                "handler"
+            )
             publish = true
             setPublications("mavenJava")
             version(closureOf<BintrayExtension.VersionConfig> {
@@ -250,6 +257,10 @@ tasks {
 //    named<Task>("afterReleaseBuild") {
 //        dependsOn(bintrayUpload)
 //    }
+    publish {
+        dependsOn(bintrayUpload)
+        dependsOn(bintrayPublish)
+    }
 }
 
 kotlin {
