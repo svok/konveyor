@@ -198,7 +198,7 @@ kotlin {
                     userOrg = "spectrum-project"
                     websiteUrl = "https://github.com/spectrum-project/konveyor"
                     issueTrackerUrl = "https://github.com/spectrum-project/konveyor/issues"
-                    vcsUrl = "git@github.com:spectrum-project/konveyor.git"
+                    vcsUrl = "https://github.com/spectrum-project/konveyor.git"
                     githubRepo = "spectrum-project/konveyor"
                     githubReleaseNotesFile = "CHANGELOG.md"
                     setLicenses("Apache-2.0")
