@@ -171,10 +171,11 @@ kotlin {
 //                        url.set("http://example.com/my-library/")
 //                    }
                         }
-                        
+                        val jvmJar by getting(Jar::class)
                         from(getComponents().get("kotlin"))
                         artifact(sourcesJar)
                         artifact(dokkaJar)
+                        artifact(jvmJar.archiveFile.get())
                     }
                 }
                 repositories {
