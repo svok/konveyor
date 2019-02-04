@@ -10,4 +10,4 @@ pluginManagement {
 rootProject.name = "konveyor"
 
 
-//enableFeaturePreview("GRADLE_METADATA")
+enableFeaturePreview("GRADLE_METADATA")
