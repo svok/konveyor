@@ -52,9 +52,9 @@ jobs:
       - run: gradle build
       - run: gradle check
       - codecov/upload:
-        file: build/reports/jacoco/report.xml
-      - store_artifacts
-        path: build/libs
+          file: build/reports/jacoco/report.xml
+      - store_artifacts:
+          path: /build/libs
 
       # after performing build lets store dependencies and build artifacts
       - save_cache:
