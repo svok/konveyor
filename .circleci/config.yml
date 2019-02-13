@@ -28,7 +28,7 @@ jobs:
       - persist_to_workspace:
           root: ~/workspace
           paths:
-            - build/
+            - repo/
 
   build:
     # restore defaults named 'workdirAndImage'
@@ -135,7 +135,6 @@ workflows:
                 - master
                 - dev
           requires:
-            - checkout_code
             - build
 
       # run tests after build
