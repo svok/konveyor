@@ -292,9 +292,6 @@ kotlin {
                 dependsOn(dokkaJar)
             }
 
-//    named<Task>("afterReleaseBuild") {
-//        dependsOn(bintrayUpload)
-//    }
         }
     }
     //js()
