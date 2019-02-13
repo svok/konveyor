@@ -30,7 +30,7 @@ jobs:
           paths:
             - repo/
 
-  build:
+  build_only:
     # restore defaults named 'workdirAndImage'
     <<: *workdirAndImage
     # override working directory (its defined as ~/workspace in 'workdirAndImage'), we want work on checked out code
