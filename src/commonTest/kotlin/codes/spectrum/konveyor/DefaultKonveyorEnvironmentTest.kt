@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertFails
 import kotlin.test.expect
 
-internal class DefaultKonveyorEnvironmentJvmTest {
+internal class DefaultKonveyorEnvironmentTest {
 
     @Test
     fun hasTest() {
