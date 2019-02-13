@@ -1,5 +1,10 @@
 import com.jfrog.bintray.gradle.BintrayExtension
 import com.jfrog.bintray.gradle.tasks.BintrayUploadTask
+import groovy.lang.GroovyObject
+import org.jfrog.gradle.plugin.artifactory.dsl.DoubleDelegateWrapper
+import org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 buildscript {
@@ -10,10 +15,12 @@ buildscript {
 }
 
 plugins {
-    kotlin("multiplatform") version "1.3.20"
+    kotlin("multiplatform") version "1.3.21"
     `maven-publish`
     id("com.jfrog.bintray") version "1.8.4"
+    id("com.jfrog.artifactory") version "4.9.0"
     id("maven-publish")
+    id("net.nemerosa.versioning") version "2.8.2"
     jacoco
     id("org.jetbrains.dokka") version "0.9.17"
     maven
@@ -25,7 +32,7 @@ repositories {
 }
 
 group = "codes.spectrum"
-version = "0.0.1"
+version = "0.1.0-SNAPSHOT"
 
 jacoco {
     toolVersion = "0.8.3"
@@ -62,6 +69,12 @@ tasks {
 kotlin {
     jvm {
         val main by compilations.getting {
+
+            compileKotlinTask // get the Kotlin task 'compileKotlinJvm'
+            output // get the main compilation output
+        }
+
+        val test by compilations.getting {
             kotlinOptions {
                 // Setup the Kotlin compiler options for the 'main' compilation:
                 jvmTarget = "1.8"
@@ -92,16 +105,35 @@ kotlin {
 
                 sourceDirs = main.defaultSourceSet.kotlin
 
-//                sourceDirs = listOf(
-//                    "src/commonMain/kotlin",
-//                    "src/jvmMain/kotlin"
-//                ).map { projectDir.resolve(it) }
+            }
 
-//        samples = listOf("src/samples/java", "src/samples/kotlin")
+            val jvmJar by getting(Jar::class) {
+                manifest {
+                    val buildTimeAndDate = OffsetDateTime.now()
+//                    var generateManifest by extra(false)
+                    val buildDate by extra { DateTimeFormatter.ISO_LOCAL_DATE.format(buildTimeAndDate) }
+                    val buildTime by extra { DateTimeFormatter.ofPattern("HH:mm:ss.SSSZ").format(buildTimeAndDate) }
+                    val buildRevision by extra { versioning.info.commit }
+                    val builtByValue by extra { project.findProperty("builtBy") ?: project.property("defaultBuiltBy") }
 
-//        includes = projectDir.resolve("src/main/docs").walkTopDown()
-//            .filter { it.isFile }
-//            .toList()
+                    attributes(
+                        mutableMapOf(
+                            "Created-By" to "${System.getProperty("java.version")} (${System.getProperty("java.vendor")} ${System.getProperty(
+                                "java.vm.version"
+                            )})",
+                            "Built-By" to builtByValue,
+                            "Build-Date" to buildDate,
+                            "Build-Time" to buildTime,
+                            "Build-Revision" to buildRevision,
+                            "Specification-Title" to project.name,
+                            "Specification-Version" to project.version as String,
+                            "Specification-Vendor" to "Spectrum-Project",
+                            "Implementation-Title" to project.name,
+                            "Implementation-Version" to project.version,
+                            "Implementation-Vendor" to "Spectrum-Project"
+                        )
+                    )
+                }
             }
 
             val dokkaJar by creating(Jar::class) {
@@ -185,43 +217,71 @@ kotlin {
                 }
             }
 
-            bintray {
-                user = System.getenv("bintrayUser")?.toString() ?: ""
-                key = System.getenv("bintrayKey")?.toString() ?: ""
-                override = true
-                setPublications("mavenJava")
+            val bintrayUsername = System.getenv("bintrayUser")?.toString() ?: ""
+            val bintrayApiKey = System.getenv("bintrayKey")?.toString() ?: ""
 
-                pkg(closureOf<BintrayExtension.PackageConfig> {
-                    repo = "konveyor"
-                    name = "konveyor"
-                    desc = "Conveyor belt software design pattern in a kotlin DSL-like style"
-                    userOrg = "spectrum-project"
-                    websiteUrl = "https://github.com/spectrum-project/konveyor"
-                    issueTrackerUrl = "https://github.com/spectrum-project/konveyor/issues"
-                    vcsUrl = "https://github.com/spectrum-project/konveyor.git"
-                    githubRepo = "spectrum-project/konveyor"
-                    githubReleaseNotesFile = "CHANGELOG.md"
-                    setLicenses("Apache-2.0")
-                    setLabels(
-                        "conveyor",
-                        "conveyor-belt",
-                        "processor",
-                        "workflow",
-                        "kotlin",
-                        "kotlin dsl",
-                        "handler"
-                    )
-                    publish = true
-                    setPublications("mavenJava")
-                    version(closureOf<BintrayExtension.VersionConfig> {
-                        this.name = project.version.toString()
-                        released = Date().toString()
+            if ((project.version as String).endsWith("-SNAPSHOT")) {
+                artifactory {
+                    setContextUrl("https://oss.jfrog.org/artifactory")
+                    //The base Artifactory URL if not overridden by the publisher/resolver
+                    publish(delegateClosureOf<PublisherConfig> {
+                        repository(delegateClosureOf<DoubleDelegateWrapper> {
+                            invokeMethod("setRepoKey", "oss-snapshot-local")
+                            invokeMethod("setUsername", bintrayUsername)
+                            invokeMethod("setPassword", bintrayApiKey)
+                            invokeMethod("setMavenCompatible", true)
+                            invokeMethod("setPublishBuildInfo", false)
+                        })
+
+                        defaults(delegateClosureOf<GroovyObject> {
+                            invokeMethod("publications", "mavenJava")
+                        })
                     })
-//            artifacts{
-//                add("source", sourcesJar)
-//                add(dokkaJar)
-//            }
-                })
+                }
+                publish {
+                    dependsOn(artifactoryDeploy)
+                    dependsOn(artifactoryPublish)
+                }
+            } else {
+
+                bintray {
+                    user = bintrayUsername
+                    key = bintrayApiKey
+                    override = true
+                    setPublications("mavenJava")
+
+                    pkg(closureOf<BintrayExtension.PackageConfig> {
+                        repo = "konveyor"
+                        name = "konveyor"
+                        desc = "Conveyor belt software design pattern in a kotlin DSL-like style"
+                        userOrg = "spectrum-project"
+                        websiteUrl = "https://github.com/spectrum-project/konveyor"
+                        issueTrackerUrl = "https://github.com/spectrum-project/konveyor/issues"
+                        vcsUrl = "https://github.com/spectrum-project/konveyor.git"
+                        githubRepo = "spectrum-project/konveyor"
+                        githubReleaseNotesFile = "CHANGELOG.md"
+                        setLicenses("Apache-2.0")
+                        setLabels(
+                            "conveyor",
+                            "conveyor-belt",
+                            "processor",
+                            "workflow",
+                            "kotlin",
+                            "kotlin dsl",
+                            "handler"
+                        )
+                        publish = true
+                        setPublications("mavenJava")
+                        version(closureOf<BintrayExtension.VersionConfig> {
+                            this.name = project.version.toString()
+                            released = Date().toString()
+                        })
+                    })
+                }
+                publish {
+                    dependsOn(bintrayUpload)
+                    dependsOn(bintrayPublish)
+                }
             }
 
             val bintrayUpload by existing(BintrayUploadTask::class) {
@@ -235,10 +295,6 @@ kotlin {
 //    named<Task>("afterReleaseBuild") {
 //        dependsOn(bintrayUpload)
 //    }
-            publish {
-                dependsOn(bintrayUpload)
-                dependsOn(bintrayPublish)
-            }
         }
     }
     //js()
@@ -258,7 +314,7 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
+//                implementation(kotlin("test-annotations"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.1.1")
             }
         }
@@ -273,6 +329,9 @@ kotlin {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1")
+                implementation("org.junit.jupiter:junit-jupiter-api:5.3.2")
+                implementation("org.junit.jupiter:junit-jupiter-params:5.3.2")
+                implementation("org.junit.jupiter:junit-jupiter-engine:5.3.2")
             }
         }
 //        val jsMain by getting {
