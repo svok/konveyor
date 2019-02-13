@@ -45,9 +45,9 @@ jobs:
           keys:
             # this key relates to build.gradle. If this file has not been changed since the last build, cache will be used
             # {{ checksum "build.gradle" }} simply tells Circle CI to calculate checksum from build.gradle
-            - v2-dependencies-{{ checksum "build.gradle.kts" }}
+            - build-{{ checksum "build.gradle.kts" }}
             # fallback to using the latest cache if no exact match is found
-            - v2-dependencies-
+            - build-
 
       - run: gradle build
       - run: gradle check
@@ -61,7 +61,7 @@ jobs:
           paths:
             - ~/.gradle
             - ~/.m2
-          key: v2-dependencies-{{ checksum "build.gradle.kts" }}
+          key: build-{{ checksum "build.gradle.kts" }}
 
   publish:
     # restore defaults named 'workdirAndImage'
@@ -78,9 +78,12 @@ jobs:
           keys:
             # this key relates to build.gradle. If this file has not been changed since the last build, cache will be used
             # {{ checksum "build.gradle" }} simply tells Circle CI to calculate checksum from build.gradle
-            - v2-dependencies-{{ checksum "build.gradle.kts" }}
+            - publish-{{ checksum "build.gradle.kts" }}
             # fallback to using the latest cache if no exact match is found
-            - v2-dependencies-
+            - publish-
+
+            - build-{{ checksum "build.gradle.kts" }}
+            - build-
 
       - run: gradle publish
 
@@ -89,7 +92,7 @@ jobs:
           paths:
             - ~/.gradle
             - ~/.m2
-          key: v2-dependencies-{{ checksum "build.gradle.kts" }}
+          key: publish-{{ checksum "build.gradle.kts" }}
 
   push_docker_image:
     <<: *workdirAndImage
@@ -104,9 +107,10 @@ jobs:
       - setup_remote_docker
       - restore_cache:
           keys:
-            - v2-dependencies-{{ checksum "build.gradle.kts" }}
-            # fallback to using the latest cache if no exact match is found
-            - v2-dependencies-
+            - build-{{ checksum "build.gradle.kts" }}
+            - build-
+            - publish-{{ checksum "build.gradle.kts" }}
+            - publish-
 
       # lets build and push docker with version calculated using git tags
       # this gradle task performs 'docker login ...' and 'docker push ...' commands
