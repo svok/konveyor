@@ -9,26 +9,64 @@ orbs:
 
 version: 2.1
 
+references:
+
+  container_config: &container_config
+    working_directory: ~/workspace
+    docker:
+      - image: circleci/openjdk:8-jdk
+
+  workspace_root: &workspace_root
+     ~/workspace
+
+  attach_workspace: &attach_workspace
+    attach_workspace:
+      at: *workspace_root
+
+  restore_repo: &restore_repo
+    restore_cache:
+      keys:
+        - v1-repo-{{ .Branch }}-{{ .Revision }}
+        - v1-repo-{{ .Branch }}
+        - v1-repo
+
+  jars_cache_key: &jars_cache_key
+      v7-dependency-jars-{{ checksum "build.gradle.kts" }}
+  jars_backup_cache_key: &jars_backup_cache_key
+      v7-dependency-jars
+
+  restore_jars: &restore_jars
+    restore_cache:
+      keys:
+        - *jars_cache_key
+        - *jars_backup_cache_key
+
 # 1) jobs defined here are going to be used in workflows (pipeline). You can treat jobs as steps in workflow/pipeline
 # 2) jobs in workflow are run in SEPARATE docker containers, so techniques like caching or storing to workspace is a common thing
 # 3) jobs don't have to be run within a workflow, they can be run separately, see CircleCI documentation for that
 jobs:
 
   checkout_code:
-    #apply defaults defined at the top of the config (working dir + docker image)
-    <<: *workdirAndImage
-
-    #here we are defining steps for given job/step
+    <<: *container_config
     steps:
-      # checkout is a built-in step which simply pulls git repository. path parameter is optional
-      - checkout:
-          path: ~/workspace/repo
-
-      # we checked out the code in the previous stepw, lets store it to the workspace
-      - persist_to_workspace:
-          root: ~/workspace
+      - *restore_repo
+      - checkout
+      - save_cache:
+          key: v1-repo-{{ .Branch }}-{{ .Revision }}
           paths:
-            - repo/
+            - .
+
+  clojure_dependencies:
+    <<: *container_config
+    steps:
+      - *restore_repo
+      - *restore_jars
+      - run:
+          command: lein deps
+      - save_cache:
+          key: *jars_cache_key
+          paths:
+            - /root/.m2
 
   build:
     # restore defaults named 'workdirAndImage'
@@ -45,9 +83,9 @@ jobs:
           keys:
             # this key relates to build.gradle. If this file has not been changed since the last build, cache will be used
             # {{ checksum "build.gradle" }} simply tells Circle CI to calculate checksum from build.gradle
-            - build-{{ checksum "build.gradle.kts" }}
+            - v2-dependencies-{{ checksum "build.gradle.kts" }}
             # fallback to using the latest cache if no exact match is found
-            - build-
+            - v2-dependencies-
 
       - run: gradle build
       - run: gradle check
@@ -61,9 +99,9 @@ jobs:
           paths:
             - ~/.gradle
             - ~/.m2
-          key: build-{{ checksum "build.gradle.kts" }}
+          key: v2-dependencies-{{ checksum "build.gradle.kts" }}
 
-  publish:
+  build_and_publish:
     # restore defaults named 'workdirAndImage'
     <<: *workdirAndImage
     # override working directory (its defined as ~/workspace in 'workdirAndImage'), we want work on checked out code
@@ -78,21 +116,24 @@ jobs:
           keys:
             # this key relates to build.gradle. If this file has not been changed since the last build, cache will be used
             # {{ checksum "build.gradle" }} simply tells Circle CI to calculate checksum from build.gradle
-            - publish-{{ checksum "build.gradle.kts" }}
+            - v2-dependencies-{{ checksum "build.gradle.kts" }}
             # fallback to using the latest cache if no exact match is found
-            - publish-
+            - v2-dependencies-
 
-            - build-{{ checksum "build.gradle.kts" }}
-            - build-
-
+      - run: gradle build
+      - run: gradle check
       - run: gradle publish
+      - codecov/upload:
+          file: build/reports/jacoco/report.xml
+      - store_artifacts:
+          path: build/libs
 
       # after performing build lets store dependencies and build artifacts
       - save_cache:
           paths:
             - ~/.gradle
             - ~/.m2
-          key: publish-{{ checksum "build.gradle.kts" }}
+          key: v2-dependencies-{{ checksum "build.gradle.kts" }}
 
   push_docker_image:
     <<: *workdirAndImage
@@ -107,10 +148,9 @@ jobs:
       - setup_remote_docker
       - restore_cache:
           keys:
-            - build-{{ checksum "build.gradle.kts" }}
-            - build-
-            - publish-{{ checksum "build.gradle.kts" }}
-            - publish-
+            - v2-dependencies-{{ checksum "build.gradle.kts" }}
+            # fallback to using the latest cache if no exact match is found
+            - v2-dependencies-
 
       # lets build and push docker with version calculated using git tags
       # this gradle task performs 'docker login ...' and 'docker push ...' commands
@@ -129,17 +169,22 @@ workflows:
 
       # because we need to run build after checking out the code, we need to add 'requires' attribute
       - build:
+          filters:
+            branches:
+              except:
+                - master
+                - dev
           requires:
             - checkout_code
 
-      - publish:
+      - build_and_publish:
           filters:
             branches:
               only:
                 - master
                 - dev
           requires:
-            - build
+            - checkout_code
 
       # run tests after build
 #      - test:
