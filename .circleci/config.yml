@@ -83,9 +83,9 @@ jobs:
           keys:
             # this key relates to build.gradle. If this file has not been changed since the last build, cache will be used
             # {{ checksum "build.gradle" }} simply tells Circle CI to calculate checksum from build.gradle
-            - v2-dependencies-{{ checksum "build.gradle.kts" }}
+            - v3-dependencies-{{ checksum "build.gradle.kts" }}
             # fallback to using the latest cache if no exact match is found
-            - v2-dependencies-
+            - v3-dependencies-
 
       - run: gradle build
       - run: gradle check
@@ -99,7 +99,7 @@ jobs:
           paths:
             - ~/.gradle
             - ~/.m2
-          key: v2-dependencies-{{ checksum "build.gradle.kts" }}
+          key: v3-dependencies-{{ checksum "build.gradle.kts" }}
 
   build_and_publish:
     # restore defaults named 'workdirAndImage'
@@ -116,9 +116,9 @@ jobs:
           keys:
             # this key relates to build.gradle. If this file has not been changed since the last build, cache will be used
             # {{ checksum "build.gradle" }} simply tells Circle CI to calculate checksum from build.gradle
-            - v2-dependencies-{{ checksum "build.gradle.kts" }}
+            - v3-dependencies-{{ checksum "build.gradle.kts" }}
             # fallback to using the latest cache if no exact match is found
-            - v2-dependencies-
+            - v3-dependencies-
 
       - run: gradle build
       - run: gradle check
@@ -134,7 +134,7 @@ jobs:
           paths:
             - ~/.gradle
             - ~/.m2
-          key: v2-dependencies-{{ checksum "build.gradle.kts" }}
+          key: v3-dependencies-{{ checksum "build.gradle.kts" }}
 
 # lets define workflow
 workflows:
