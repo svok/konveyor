@@ -9,66 +9,28 @@ orbs:
 
 version: 2.1
 
-references:
-
-  container_config: &container_config
-    working_directory: ~/workspace
-    docker:
-      - image: circleci/openjdk:8-jdk
-
-  workspace_root: &workspace_root
-     ~/workspace
-
-  attach_workspace: &attach_workspace
-    attach_workspace:
-      at: *workspace_root
-
-  restore_repo: &restore_repo
-    restore_cache:
-      keys:
-        - v1-repo-{{ .Branch }}-{{ .Revision }}
-        - v1-repo-{{ .Branch }}
-        - v1-repo
-
-  jars_cache_key: &jars_cache_key
-      v7-dependency-jars-{{ checksum "build.gradle.kts" }}
-  jars_backup_cache_key: &jars_backup_cache_key
-      v7-dependency-jars
-
-  restore_jars: &restore_jars
-    restore_cache:
-      keys:
-        - *jars_cache_key
-        - *jars_backup_cache_key
-
 # 1) jobs defined here are going to be used in workflows (pipeline). You can treat jobs as steps in workflow/pipeline
 # 2) jobs in workflow are run in SEPARATE docker containers, so techniques like caching or storing to workspace is a common thing
 # 3) jobs don't have to be run within a workflow, they can be run separately, see CircleCI documentation for that
 jobs:
 
   checkout_code:
-    <<: *container_config
-    steps:
-      - *restore_repo
-      - checkout
-      - save_cache:
-          key: v1-repo-{{ .Branch }}-{{ .Revision }}
-          paths:
-            - .
+    #apply defaults defined at the top of the config (working dir + docker image)
+    <<: *workdirAndImage
 
-  clojure_dependencies:
-    <<: *container_config
+    #here we are defining steps for given job/step
     steps:
-      - *restore_repo
-      - *restore_jars
-      - run:
-          command: lein deps
-      - save_cache:
-          key: *jars_cache_key
-          paths:
-            - /root/.m2
+      # checkout is a built-in step which simply pulls git repository. path parameter is optional
+      - checkout:
+          path: ~/workspace/repo
 
-  build_only:
+      # we checked out the code in the previous stepw, lets store it to the workspace
+      - persist_to_workspace:
+          root: ~/workspace
+          paths:
+            - repo/
+
+  build:
     # restore defaults named 'workdirAndImage'
     <<: *workdirAndImage
     # override working directory (its defined as ~/workspace in 'workdirAndImage'), we want work on checked out code
@@ -83,9 +45,9 @@ jobs:
           keys:
             # this key relates to build.gradle. If this file has not been changed since the last build, cache will be used
             # {{ checksum "build.gradle" }} simply tells Circle CI to calculate checksum from build.gradle
-            - v3-dependencies-{{ checksum "build.gradle.kts" }}
+            - v2-dependencies-{{ checksum "build.gradle.kts" }}
             # fallback to using the latest cache if no exact match is found
-            - v3-dependencies-
+            - v2-dependencies-
 
       - run: gradle build
       - run: gradle check
@@ -99,7 +61,7 @@ jobs:
           paths:
             - ~/.gradle
             - ~/.m2
-          key: v3-dependencies-{{ checksum "build.gradle.kts" }}
+          key: v2-dependencies-{{ checksum "build.gradle.kts" }}
 
   build_and_publish:
     # restore defaults named 'workdirAndImage'
@@ -116,9 +78,9 @@ jobs:
           keys:
             # this key relates to build.gradle. If this file has not been changed since the last build, cache will be used
             # {{ checksum "build.gradle" }} simply tells Circle CI to calculate checksum from build.gradle
-            - v3-dependencies-{{ checksum "build.gradle.kts" }}
+            - v2-dependencies-{{ checksum "build.gradle.kts" }}
             # fallback to using the latest cache if no exact match is found
-            - v3-dependencies-
+            - v2-dependencies-
 
       - run: gradle build
       - run: gradle check
@@ -134,7 +96,7 @@ jobs:
           paths:
             - ~/.gradle
             - ~/.m2
-          key: v3-dependencies-{{ checksum "build.gradle.kts" }}
+          key: v2-dependencies-{{ checksum "build.gradle.kts" }}
 
 # lets define workflow
 workflows:
