@@ -92,8 +92,8 @@ val conv  = conveyor<MyContext> {
         exec { registerQuery() }
     }
 
-    // A processor containing a set of nested handlers
-    process { // Standard logics: perform all where match = true
+    // A nested conveyor for grouping purposes
+    konveyor { // Standard logics: perform all where match = true
         timeout { Duration.ofMilliseconds(150) }
         exec { someProp = someFun() }
         handle {
@@ -101,8 +101,31 @@ val conv  = conveyor<MyContext> {
             exec { someFun() }
         }
     }
+    
+    // A nested conveyor with change of context
+    subKonveyor<MySubContext> {
+        // Splitter to create a sequence of nested context objects
+        split {
+            this.myContextCollection.asSequence()
+        }
+        
+        // Normal handlers over nested context objects
+        exec { someProp = someFun() }
+        handle {
+            on { isOk() }
+            exec { someFun() }
+        }
+        
+        // Joiner to join the series of nested context objects into main context 
+        join { it: MySubContext ->
+            this.myContextResult += it.someValue 
+        }
+    }
 
-    processFirst { // Perform only first handler with match = true
+    // Perform only first handler with match = true
+    // Under discussion
+    /*
+    processFirst {
         timeout { Duration.ofMilliseconds(150) }
         handle {
             on { isSomething() }
@@ -113,8 +136,12 @@ val conv  = conveyor<MyContext> {
             exec { someFun() }
         }
     }
+    */
 
-    processParallel { // Perform all handlers with match = true in parallel
+    // Perform all handlers with match = true in parallel
+    // Under discussion
+    /*
+    processParallel {
         timeout { Duration.ofMilliseconds(150) }
         repeatWhile { someCondition() } // Repeat starting all handlers while `someCondition()` is true
         handle {
@@ -126,7 +153,7 @@ val conv  = conveyor<MyContext> {
             exec { someFun() }
         }
     }
-
+    */
 
     // Some custom processor
     processFiles {
@@ -148,7 +175,6 @@ val conv  = conveyor<MyContext> {
             this.inputStream = file.inputStream
             this.fileName = file.fileName
         }
-
 
     }
     exec { // this: MyContext ->
@@ -207,3 +233,7 @@ dependencies {
     implementation("codes.spectrum:konveyor:0.0.1")
 }
 ```
+
+## License
+
+Konveyor is provided under Apache License version 2.0. See LICENSE.txt for more details.

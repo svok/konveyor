@@ -30,7 +30,7 @@ jobs:
           paths:
             - repo/
 
-  build:
+  build_only:
     # restore defaults named 'workdirAndImage'
     <<: *workdirAndImage
     # override working directory (its defined as ~/workspace in 'workdirAndImage'), we want work on checked out code
@@ -53,6 +53,8 @@ jobs:
       - run: gradle check
       - codecov/upload:
           file: build/reports/jacoco/report.xml
+      - store_artifacts:
+          path: build/libs
 
       # after performing build lets store dependencies and build artifacts
       - save_cache:
@@ -61,7 +63,7 @@ jobs:
             - ~/.m2
           key: v2-dependencies-{{ checksum "build.gradle.kts" }}
 
-  publish:
+  build_and_publish:
     # restore defaults named 'workdirAndImage'
     <<: *workdirAndImage
     # override working directory (its defined as ~/workspace in 'workdirAndImage'), we want work on checked out code
@@ -80,7 +82,14 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v2-dependencies-
 
+      - run: gradle build
+      - run: gradle check
       - run: gradle publish
+
+      - codecov/upload:
+          file: build/reports/jacoco/report.xml
+      - store_artifacts:
+          path: build/libs
 
       # after performing build lets store dependencies and build artifacts
       - save_cache:
@@ -89,27 +98,6 @@ jobs:
             - ~/.m2
           key: v2-dependencies-{{ checksum "build.gradle.kts" }}
 
-  push_docker_image:
-    <<: *workdirAndImage
-    working_directory: ~/workspace/repo
-
-
-    steps:
-      - attach_workspace:
-          at: ~/workspace
-
-      # this step setups docker deamon, so we can use it later
-      - setup_remote_docker
-      - restore_cache:
-          keys:
-            - v2-dependencies-{{ checksum "build.gradle.kts" }}
-            # fallback to using the latest cache if no exact match is found
-            - v2-dependencies-
-
-      # lets build and push docker with version calculated using git tags
-      # this gradle task performs 'docker login ...' and 'docker push ...' commands
-      - run: gradle pushDockerWithGitVersion
-
 # lets define workflow
 workflows:
   version: 2.1
@@ -117,16 +105,19 @@ workflows:
   # workflow name
   build_test_and_deploy:
 
-    #define jobs within the workflow
     jobs:
       - checkout_code
 
-      # because we need to run build after checking out the code, we need to add 'requires' attribute
-      - build:
+      - build_only:
+          filters:
+            branches:
+              ignore:
+                - master
+                - dev
           requires:
             - checkout_code
 
-      - publish:
+      - build_and_publish:
           filters:
             branches:
               only:
@@ -134,18 +125,3 @@ workflows:
                 - dev
           requires:
             - checkout_code
-            - build
-
-      # run tests after build
-#      - test:
-#          requires:
-#            - build
-
-      # after we are sure the tests are passing, lets push Docker image.
-      # we want to do it only for 'master' branch
-#      - push_docker_image:
-#          requires:
-#            - test
-#          filters:
-#            branches:
-#              only: master
