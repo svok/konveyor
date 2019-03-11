@@ -16,6 +16,7 @@
  */
 package codes.spectrum.konveyor
 
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -93,6 +94,41 @@ class konveyorBuilderTest {
     }
 
     @Test
+    @Ignore
+    // Test is ignored since SubKonveyorBuilder::on is not working
+    fun `subKonveyorTest use on`() {
+        val myContext = MyContext(id = "1", value = 1, list = mutableListOf(12L, 13L, 14L))
+        val conveyor = konveyor<MyContext> {
+            subKonveyor<MySubContext> {
+                on { false }
+                split {
+                    list
+                        .map {
+                            MySubContext(
+                                subId = it.toString(),
+                                subValue = it
+                            )
+                        }
+                        .asSequence()
+                }
+
+                exec {
+                    subValue *= 2
+                }
+
+                join { joining: MySubContext ->
+                    value += joining.subValue.toInt()
+                }
+            }
+        }
+
+        runMultiplatformBlocking { conveyor.exec(myContext) }
+
+        assertEquals(1, myContext.value)
+
+    }
+
+    @Test
     fun emptySubKonveyorTest() {
         val myContext = MyContext(id = "1", value = 1, list = mutableListOf(12L, 13L, 14L))
         val conveyor = konveyor<MyContext> {
@@ -132,6 +168,19 @@ class konveyorBuilderTest {
 
     }
 
+    @Test
+    fun addHandlerTest() {
+        val myContext = MyContext(id = "1", value = 1)
+        val conveyor = konveyor<MyContext> {
+            add(SomeHandler())
+            +SomeHandler()
+        }
+
+        runMultiplatformBlocking { conveyor.exec(myContext) }
+
+        assertEquals(2001, myContext.value)
+    }
+
     internal data class MyContext(
         var id: String = "",
         var value: Int = 0,
@@ -142,5 +191,14 @@ class konveyorBuilderTest {
         var subId: String = "",
         var subValue: Long = 0
     )
+
+    internal class SomeHandler(): IKonveyorHandler<MyContext> {
+        override fun match(context: MyContext, env: IKonveyorEnvironment): Boolean = true
+
+        override suspend fun exec(context: MyContext, env: IKonveyorEnvironment) {
+            context.value += 1000
+        }
+
+    }
 
 }

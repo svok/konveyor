@@ -23,7 +23,7 @@ package codes.spectrum.konveyor
 @KonveyorTagMarker
 open class HandlerBuilder<T> {
 
-    private var matcher: KonveyorMatcherType<T> = { true }
+    protected var matcher: KonveyorMatcherType<T> = { true }
     private var executor: KonveyorExecutorType<T> = { }
 
     /**
