@@ -20,9 +20,10 @@ package codes.spectrum.konveyor
  * Main Konveyor class that includes all workflow of the konveyor
  */
 open class Konveyor<T>(
+    private val matcher: KonveyorMatcherType<T> = { true },
     private val handlers: List<IKonveyorHandler<T>> = listOf()
 ): IKonveyorHandler<T> {
-    override fun match(context: T, env: IKonveyorEnvironment): Boolean = true
+    override fun match(context: T, env: IKonveyorEnvironment): Boolean = context.matcher(env)
 
     override suspend fun exec(context: T, env: IKonveyorEnvironment) {
         handlers.forEach {

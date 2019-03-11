@@ -20,14 +20,31 @@ package codes.spectrum.konveyor
 @KonveyorTagMarker
 class SubKonveyorBuilder<T,S>: KonveyorBuilder<S>() {
 
+    protected var matcherT: KonveyorMatcherType<T> = { true }
     private var splitter: SubKonveyorSplitterType<T, S> = { sequence {  } }
     private var joiner: SubKonveyorJoinerType<T, S> = { _: S, _: IKonveyorEnvironment -> }
 
     fun buildNew(): SubKonveyorWrapper<T, S> = SubKonveyorWrapper(
+        matcher = matcherT,
         subKonveyor = build(),
         splitter = splitter,
         joiner = joiner
     )
+
+//    /**
+//     * With this methos one can set the lambda for matcher [[IKonveyorHandler.match]] to the handler
+//     */
+//    fun on(block: KonveyorMatcherShortType<T>) {
+//        onEnv(block = { block() } as KonveyorMatcherType<T>)
+//    }
+
+//    /**
+//     * With this methos one can set the lambda for matcher [[IKonveyorHandler.match]] having access to
+//     * [[IKonveyorEnvironment]] through lambda parameter to the handler
+//     */
+//    fun onEnv(block: KonveyorMatcherType<T>) {
+//        matcherT = block
+//    }
 
     fun split(block: SubKonveyorSplitterShortType<T, S>) {
         splitEnv { env ->
@@ -39,7 +56,7 @@ class SubKonveyorBuilder<T,S>: KonveyorBuilder<S>() {
         splitter = block
     }
 
-    fun join(block: T.(S) -> Unit) {
+    fun join(block: SubKonveyorJoinerShortType<T, S>) {
         joinEnv { joining, env ->
             block(joining)
         }
