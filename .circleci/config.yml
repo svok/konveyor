@@ -49,8 +49,8 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v2-dependencies-
 
-      - run: gradle build
-      - run: gradle check
+      - run: gradlew build
+      - run: gradlew check
       - codecov/upload:
           file: build/reports/jacoco/report.xml
       - store_artifacts:
@@ -82,9 +82,9 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v2-dependencies-
 
-      - run: gradle build
-      - run: gradle check
-      - run: gradle publish
+      - run: gradlew build
+      - run: gradlew check
+      - run: gradlew publish
 
       - codecov/upload:
           file: build/reports/jacoco/report.xml
