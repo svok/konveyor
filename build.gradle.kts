@@ -31,7 +31,7 @@ buildscript {
 }
 
 plugins {
-    kotlin("multiplatform") version "1.3.21"
+    kotlin("multiplatform") version "1.3.20"
     `maven-publish`
     id("com.jfrog.bintray") version "1.8.4"
     id("com.jfrog.artifactory") version "4.9.0"
