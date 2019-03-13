@@ -18,9 +18,7 @@ package codes.spectrum.konveyor
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.channels.map
 import kotlinx.coroutines.channels.produce
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 /**
@@ -33,17 +31,20 @@ class SubKonveyorWrapper<T, S>(
     private val joiner: SubKonveyorJoinerType<T, S> = { _: S, _: IKonveyorEnvironment -> },
     private val bufferSizer: SubKonveyorCoroutineBufferSize<T> = { 1 },
     private val contexter: SubKonveyorCoroutineContextType<T> = { EmptyCoroutineContext }
-): IKonveyorHandler<T> {
+) : IKonveyorHandler<T> {
 
     override fun match(context: T, env: IKonveyorEnvironment): Boolean = context.matcher(env)
 
     override suspend fun exec(context: T, env: IKonveyorEnvironment) {
-        GlobalScope
-            .produce(context = context.contexter(env), capacity = context.bufferSizer(env)) { context.splitter(env).forEach { send(it) } }
-            .map { subKonveyor.exec(it, env); it }
-            .consumeEach {
-                context.joiner(it, env)
+        val src = GlobalScope
+            .produce() { context.splitter(env).forEach { send(it) } }
+
+        GlobalScope.produce(context = context.contexter(env), capacity = context.bufferSizer(env)) {
+            for (context in src) {
+                subKonveyor.exec(context, env)
+                send(context)
             }
+        }.consumeEach { context.joiner(it, env) }
     }
 }
 
