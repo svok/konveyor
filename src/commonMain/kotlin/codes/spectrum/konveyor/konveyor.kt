@@ -16,6 +16,8 @@
  */
 package codes.spectrum.konveyor
 
+import kotlin.coroutines.CoroutineContext
+
 /**
  * Global method for creation of a conveyor
  */
@@ -43,3 +45,5 @@ typealias SubKonveyorJoinerType<T, S> = suspend T.(joining: S, env: IKonveyorEnv
 typealias SubKonveyorSplitterType<T, S> = suspend T.(env: IKonveyorEnvironment) -> Sequence<S>
 typealias SubKonveyorJoinerShortType<T, S> = suspend T.(joining: S) -> Unit
 typealias SubKonveyorSplitterShortType<T, S> = suspend T.() -> Sequence<S>
+typealias SubKonveyorCoroutineContextType<T> = suspend T.(env: IKonveyorEnvironment) -> CoroutineContext
+typealias SubKonveyorCoroutineBufferSize<T> = suspend T.(env: IKonveyorEnvironment) -> Int
