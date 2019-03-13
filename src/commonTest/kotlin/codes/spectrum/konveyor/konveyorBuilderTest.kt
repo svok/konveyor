@@ -65,8 +65,6 @@ class konveyorBuilderTest {
         val myContext = MyContext(id = "1", value = 1, list = mutableListOf(12L, 13L, 14L))
         val conveyor = konveyor<MyContext> {
             subKonveyor<MySubContext> {
-                bufferSize { 2 }
-                joinersNumber { 3 }
 
                 split {
                     list

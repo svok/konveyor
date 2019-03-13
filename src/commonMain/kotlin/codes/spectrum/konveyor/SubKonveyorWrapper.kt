@@ -39,16 +39,18 @@ class SubKonveyorWrapper<T: Any, S: Any>(
 
     override suspend fun exec(context: T, env: IKonveyorEnvironment) {
         val crContext = context.contexter(env)
+        val consumers = context.consumer(env)
+        val bSize = context.bufferSizer(env)
         val src = GlobalScope
-            .produce() { context.splitter(env).forEach { send(it) } }
+            .produce { context.splitter(env).forEach { subContext -> send(subContext) } }
 
-        val handlers = GlobalScope.produce(context = crContext, capacity = context.bufferSizer(env)) {
+        val handlers = GlobalScope.produce(context = crContext, capacity = bSize) {
             for (context in src) {
                 subKonveyor.exec(context, env)
                 send(context)
             }
         }
-        val consumers = context.consumer(env)
+        println("CONSUMERS: $consumers")
         if (consumers > 1) {
             repeat(consumers) {
                 GlobalScope.launch(crContext) { handlers.consumeEach { context.joiner(it, env) } }
