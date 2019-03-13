@@ -19,32 +19,43 @@ package codes.spectrum.konveyor
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.launch
 import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Main Konveyor class that includes all workflow of the konveyor
  */
-class SubKonveyorWrapper<T, S>(
+class SubKonveyorWrapper<T: Any, S: Any>(
     private val matcher: KonveyorMatcherType<T> = { true },
     private val subKonveyor: Konveyor<S> = Konveyor(),
     private val splitter: SubKonveyorSplitterType<T, S> = { sequence { } },
     private val joiner: SubKonveyorJoinerType<T, S> = { _: S, _: IKonveyorEnvironment -> },
     private val bufferSizer: SubKonveyorCoroutineBufferSize<T> = { 1 },
-    private val contexter: SubKonveyorCoroutineContextType<T> = { EmptyCoroutineContext }
+    private val contexter: SubKonveyorCoroutineContextType<T> = { EmptyCoroutineContext },
+    private val consumer: SubKonveyorCoroutineConsumer<T> = { 1 }
 ) : IKonveyorHandler<T> {
 
     override fun match(context: T, env: IKonveyorEnvironment): Boolean = context.matcher(env)
 
     override suspend fun exec(context: T, env: IKonveyorEnvironment) {
+        val crContext = context.contexter(env)
         val src = GlobalScope
             .produce() { context.splitter(env).forEach { send(it) } }
 
-        GlobalScope.produce(context = context.contexter(env), capacity = context.bufferSizer(env)) {
+        val handlers = GlobalScope.produce(context = crContext, capacity = context.bufferSizer(env)) {
             for (context in src) {
                 subKonveyor.exec(context, env)
                 send(context)
             }
-        }.consumeEach { context.joiner(it, env) }
+        }
+        val consumers = context.consumer(env)
+        if (consumers > 1) {
+            repeat(consumers) {
+                GlobalScope.launch(crContext) { handlers.consumeEach { context.joiner(it, env) } }
+            }
+        } else {
+            handlers.consumeEach { context.joiner(it, env) }
+        }
     }
 }
 

@@ -48,7 +48,7 @@ repositories {
 }
 
 group = "codes.spectrum"
-version = "0.1.4"
+version = "0.1.5"
 
 jacoco {
     toolVersion = "0.8.3"

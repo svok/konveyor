@@ -20,13 +20,14 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 
 @KonveyorTagMarker
-class SubKonveyorBuilder<T,S>: KonveyorBuilder<S>() {
+class SubKonveyorBuilder<T: Any,S: Any>: KonveyorBuilder<S>() {
 
     protected var matcherT: KonveyorMatcherType<T> = { true }
     private var splitter: SubKonveyorSplitterType<T, S> = { sequence {  } }
     private var joiner: SubKonveyorJoinerType<T, S> = { _: S, _: IKonveyorEnvironment -> }
     private var contexter: SubKonveyorCoroutineContextType<T> = { EmptyCoroutineContext }
     private var bufferSizer: SubKonveyorCoroutineBufferSize<T> = { 1 }
+    private var consumer: SubKonveyorCoroutineConsumer<T> = { 1 }
 
     fun buildNew(): SubKonveyorWrapper<T, S> = SubKonveyorWrapper(
         matcher = matcherT,
@@ -34,7 +35,8 @@ class SubKonveyorBuilder<T,S>: KonveyorBuilder<S>() {
         splitter = splitter,
         joiner = joiner,
         bufferSizer = bufferSizer,
-        contexter = contexter
+        contexter = contexter,
+        consumer = consumer
     )
 
 //    /**
@@ -54,6 +56,7 @@ class SubKonveyorBuilder<T,S>: KonveyorBuilder<S>() {
 
     fun bufferSize(block: SubKonveyorCoroutineBufferSize<T>) { bufferSizer = block}
     fun coroutineContext(block: SubKonveyorCoroutineContextType<T>) { contexter = block}
+    fun joinersNumber(block: SubKonveyorCoroutineConsumer<T>) { consumer = block}
 
     fun split(block: SubKonveyorSplitterShortType<T, S>) {
         splitEnv { env ->
