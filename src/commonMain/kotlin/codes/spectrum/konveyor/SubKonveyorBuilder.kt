@@ -57,7 +57,6 @@ class SubKonveyorBuilder<T: Any,S: Any>: KonveyorBuilder<S>() {
 //    }
 
     fun bufferSize(block: SubKonveyorCoroutineBufferSize<T>) { bufferSizer = block}
-    @ExperimentalContracts
     fun coroutineContext(block: SubKonveyorCoroutineContextType<T>) { contexter = block}
     fun joinersNumber(block: SubKonveyorCoroutineConsumer<T>) { consumer = block}
 
