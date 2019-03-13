@@ -181,6 +181,23 @@ class konveyorBuilderTest {
         assertEquals(2001, myContext.value)
     }
 
+    @Test
+    fun addKonveyorTest() {
+        val myContext = MyContext(id = "1", value = 1)
+        val addedKonveyor = konveyor<MyContext> {
+            add(SomeHandler())
+            +SomeHandler()
+        }
+        val conveyor = konveyor<MyContext> {
+            add(addedKonveyor)
+            +addedKonveyor
+        }
+
+        runMultiplatformBlocking { conveyor.exec(myContext) }
+
+        assertEquals(4001, myContext.value)
+    }
+
     internal data class MyContext(
         var id: String = "",
         var value: Int = 0,

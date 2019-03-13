@@ -25,6 +25,15 @@ fun <T> konveyor(body: KonveyorBuilder<T>.() -> Unit ): Konveyor<T> {
     return builder.build()
 }
 
+/**
+ * Global method for creation of a handler instance
+ */
+fun <T> handler(body: HandlerBuilder<T>.() -> Unit ): IKonveyorHandler<T> {
+    val builder = HandlerBuilder<T>()
+    builder.body()
+    return builder.build()
+}
+
 typealias KonveyorExecutorType<T> = suspend T.(IKonveyorEnvironment) -> Unit
 typealias KonveyorMatcherType<T> = T.(IKonveyorEnvironment) -> Boolean
 typealias KonveyorExecutorShortType<T> = suspend T.() -> Unit
