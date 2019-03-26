@@ -16,10 +16,10 @@
  */
 package codes.spectrum.konveyor
 
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 /**
@@ -41,22 +41,26 @@ class SubKonveyorWrapper<T: Any, S: Any>(
         val crContext = context.contexter(env)
         val consumers = context.consumer(env)
         val bSize = context.bufferSizer(env)
-        val src = GlobalScope
-            .produce { context.splitter(env).forEach { subContext -> send(subContext) } }
+        withContext(crContext) {
 
-        val handlers = GlobalScope.produce(context = crContext, capacity = bSize) {
-            for (context in src) {
-                subKonveyor.exec(context, env)
-                send(context)
+            val src = produce(capacity = bSize) {
+                context.splitter(env).forEach { subContext -> send(subContext) }
             }
-        }
-        println("CONSUMERS: $consumers")
-        if (consumers > 1) {
-            repeat(consumers) {
-                GlobalScope.launch(crContext) { handlers.consumeEach { context.joiner(it, env) } }
+
+            val handlers = produce(capacity = bSize) {
+                for (context in src) {
+                    subKonveyor.exec(context, env)
+                    send(context)
+                }
             }
-        } else {
-            handlers.consumeEach { context.joiner(it, env) }
+            println("CONSUMERS: $consumers")
+            if (consumers > 1) {
+                repeat(consumers) {
+                    launch { handlers.consumeEach { context.joiner(it, env) } }
+                }
+            } else {
+                handlers.consumeEach { context.joiner(it, env) }
+            }
         }
     }
 }
