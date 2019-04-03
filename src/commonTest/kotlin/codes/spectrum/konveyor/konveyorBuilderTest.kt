@@ -69,6 +69,7 @@ class konveyorBuilderTest {
                 split {
                     list
                         .map {
+                            println("gen: $it")
                             MySubContext(
                                 subId = it.toString(),
                                 subValue = it
@@ -78,10 +79,12 @@ class konveyorBuilderTest {
                 }
 
                 exec {
+                    println("*2: $subValue")
                     subValue *= 2
                 }
 
                 join { joining: MySubContext ->
+                    println("merge: ${joining.subValue}")
                     value += joining.subValue.toInt()
                 }
             }

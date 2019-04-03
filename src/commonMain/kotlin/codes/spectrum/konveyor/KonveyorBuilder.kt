@@ -17,7 +17,7 @@
 package codes.spectrum.konveyor
 
 @KonveyorTagMarker
-open class KonveyorBuilder<T>: HandlerBuilder<T>() {
+open class KonveyorBuilder<T: Any>: HandlerBuilder<T>() {
 
     private val handlers: MutableList<IKonveyorHandler<T>> = mutableListOf()
 
@@ -53,7 +53,7 @@ open class KonveyorBuilder<T>: HandlerBuilder<T>() {
         handlers.add(handler)
     }
 
-    fun <S> subKonveyor(block: SubKonveyorBuilder<T, S>.() -> Unit) {
+    fun <S: Any> subKonveyor(block: SubKonveyorBuilder<T, S>.() -> Unit) {
         val builder = SubKonveyorBuilder<T, S>()
         builder.block()
         val handler = builder.buildNew()

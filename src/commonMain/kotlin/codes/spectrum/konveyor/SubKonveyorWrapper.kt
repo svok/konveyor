@@ -16,26 +16,52 @@
  */
 package codes.spectrum.konveyor
 
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.EmptyCoroutineContext
+
 /**
  * Main Konveyor class that includes all workflow of the konveyor
  */
-class SubKonveyorWrapper<T, S>(
+class SubKonveyorWrapper<T: Any, S: Any>(
     private val matcher: KonveyorMatcherType<T> = { true },
     private val subKonveyor: Konveyor<S> = Konveyor(),
     private val splitter: SubKonveyorSplitterType<T, S> = { sequence { } },
-    private val joiner: SubKonveyorJoinerType<T, S> = { _: S, _: IKonveyorEnvironment -> }
-): IKonveyorHandler<T> {
+    private val joiner: SubKonveyorJoinerType<T, S> = { _: S, _: IKonveyorEnvironment -> },
+    private val bufferSizer: SubKonveyorCoroutineBufferSize<T> = { 1 },
+    private val contexter: SubKonveyorCoroutineContextType<T> = { EmptyCoroutineContext },
+    private val consumer: SubKonveyorCoroutineConsumer<T> = { 1 }
+) : IKonveyorHandler<T> {
 
     override fun match(context: T, env: IKonveyorEnvironment): Boolean = context.matcher(env)
 
     override suspend fun exec(context: T, env: IKonveyorEnvironment) {
-        fun T.getKonveyorEnv() = env
-        context
-            .splitter(env)
-            .forEach {
-                subKonveyor.exec(it, env)
-                context.joiner(it, env)
+        val crContext = context.contexter(env)
+        val consumers = context.consumer(env)
+        val bSize = context.bufferSizer(env)
+        withContext(crContext) {
+
+            val src = produce(capacity = bSize) {
+                context.splitter(env).forEach { subContext -> send(subContext) }
             }
+
+            val handlers = produce(capacity = bSize) {
+                for (context in src) {
+                    subKonveyor.exec(context, env)
+                    send(context)
+                }
+            }
+            println("CONSUMERS: $consumers")
+            if (consumers > 1) {
+                repeat(consumers) {
+                    launch { handlers.consumeEach { context.joiner(it, env) } }
+                }
+            } else {
+                handlers.consumeEach { context.joiner(it, env) }
+            }
+        }
     }
 }
 
