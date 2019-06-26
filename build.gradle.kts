@@ -48,7 +48,7 @@ repositories {
 }
 
 group = "codes.spectrum"
-version = "0.1.8"
+version = "0.1.9"
 
 jacoco {
     toolVersion = "0.8.3"
@@ -321,14 +321,14 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.1.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.2.2")
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.1.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.2.2")
             }
         }
         val jvmMain by getting {
