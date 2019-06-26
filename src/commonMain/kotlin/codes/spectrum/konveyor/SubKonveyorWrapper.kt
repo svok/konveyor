@@ -30,7 +30,7 @@ class SubKonveyorWrapper<T: Any, S: Any>(
     private val subKonveyor: Konveyor<S> = Konveyor(),
     private val splitter: SubKonveyorSplitterType<T, S> = { sequence { } },
     private val joiner: SubKonveyorJoinerType<T, S> = { _: S, _: IKonveyorEnvironment -> },
-    private val bufferSizer: SubKonveyorCoroutineBufferSize<T> = { 1 },
+    private val bufferSizer: SubKonveyorCoroutineBufferSize<T> = { 0 },
     private val contexter: SubKonveyorCoroutineContextType<T> = { EmptyCoroutineContext },
     private val consumer: SubKonveyorCoroutineConsumer<T> = { 1 }
 ) : IKonveyorHandler<T> {
@@ -43,23 +43,32 @@ class SubKonveyorWrapper<T: Any, S: Any>(
         val bSize = context.bufferSizer(env)
         withContext(crContext) {
 
-            val src = produce(capacity = bSize) {
-                context.splitter(env).forEach { subContext -> send(subContext) }
-            }
-
-            val handlers = produce(capacity = bSize) {
-                for (context in src) {
-                    subKonveyor.exec(context, env)
-                    send(context)
-                }
-            }
-            println("CONSUMERS: $consumers")
-            if (consumers > 1) {
-                repeat(consumers) {
-                    launch { handlers.consumeEach { context.joiner(it, env) } }
-                }
+            if (bSize < 0) {
+                context
+                    .splitter(env)
+                    .forEach {
+                        subKonveyor.exec(it, env)
+                        context.joiner(it, env)
+                    }
             } else {
-                handlers.consumeEach { context.joiner(it, env) }
+                val src = produce(capacity = bSize) {
+                    context.splitter(env).forEach { subContext -> send(subContext) }
+                }
+
+                val handlers = produce(capacity = bSize) {
+                    for (context in src) {
+                        subKonveyor.exec(context, env)
+                        send(context)
+                    }
+                }
+                println("CONSUMERS: $consumers")
+                if (consumers > 1) {
+                    repeat(consumers) {
+                        launch { handlers.consumeEach { context.joiner(it, env) } }
+                    }
+                } else {
+                    handlers.consumeEach { context.joiner(it, env) }
+                }
             }
         }
     }
