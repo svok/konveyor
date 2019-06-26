@@ -30,7 +30,7 @@ class SubKonveyorWrapper<T: Any, S: Any>(
     private val subKonveyor: Konveyor<S> = Konveyor(),
     private val splitter: SubKonveyorSplitterType<T, S> = { sequence { } },
     private val joiner: SubKonveyorJoinerType<T, S> = { _: S, _: IKonveyorEnvironment -> },
-    private val bufferSizer: SubKonveyorCoroutineBufferSize<T> = { 1 },
+    private val bufferSizer: SubKonveyorCoroutineBufferSize<T> = { 0 },
     private val contexter: SubKonveyorCoroutineContextType<T> = { EmptyCoroutineContext },
     private val consumer: SubKonveyorCoroutineConsumer<T> = { 1 }
 ) : IKonveyorHandler<T> {
