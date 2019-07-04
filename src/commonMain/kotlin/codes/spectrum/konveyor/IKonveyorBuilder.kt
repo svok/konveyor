@@ -16,16 +16,4 @@
  */
 package codes.spectrum.konveyor
 
-@KonveyorTagMarker
-open class KonveyorBuilder<T: Any>: BaseBuilder<T>(), IKonveyorBuilder<T> {
-
-    private val handlers: MutableList<IKonveyorHandler<T>> = mutableListOf()
-
-    override fun build(): Konveyor<T> = Konveyor(matcher = matcher, handlers = handlers, timeout = timeout)
-
-    override fun add(handler: IKonveyorHandler<T>) {
-        handlers.add(handler)
-    }
-
-}
-
+interface IKonveyorBuilder<T: Any>: IHandlerContainerBuilder<T>, IBaseBuilder<T>

@@ -16,16 +16,21 @@
  */
 package codes.spectrum.konveyor
 
-@KonveyorTagMarker
-open class KonveyorBuilder<T: Any>: BaseBuilder<T>(), IKonveyorBuilder<T> {
+interface IHandlerBuilder<T: Any>: IBaseBuilder<T> {
 
-    private val handlers: MutableList<IKonveyorHandler<T>> = mutableListOf()
-
-    override fun build(): Konveyor<T> = Konveyor(matcher = matcher, handlers = handlers, timeout = timeout)
-
-    override fun add(handler: IKonveyorHandler<T>) {
-        handlers.add(handler)
+    /**
+     * With this methods one can set the lambda for executor [[IKonveyorHandler.exec]] to the handler
+     */
+    fun exec(block: KonveyorExecutorShortType<T>) {
+        execEnv {
+            block()
+        }
     }
 
-}
+    /**
+     * With this methods one can set the lambda for executor [[IKonveyorHandler.exec]] having access to
+     * [[IKonveyorEnvironment]] through lambda parameter to the handler
+     */
+    fun execEnv(block: KonveyorExecutorType<T>)
 
+}
