@@ -16,16 +16,29 @@
  */
 package codes.spectrum.konveyor
 
-@KonveyorTagMarker
-open class KonveyorBuilder<T: Any>: BaseBuilder<T>(), IKonveyorBuilder<T> {
-
-    private val handlers: MutableList<IKonveyorHandler<T>> = mutableListOf()
-
-    override fun build(): Konveyor<T> = Konveyor(matcher = matcher, handlers = handlers, timeout = timeout)
-
-    override fun add(handler: IKonveyorHandler<T>) {
-        handlers.add(handler)
+interface IBaseBuilder<T: Any> {
+    /**
+     * With this methos one can set the lambda for matcher [[IKonveyorHandler.match]] to the handler
+     */
+    fun on(block: KonveyorMatcherShortType<T>) {
+        onEnv { block() }
     }
 
-}
+    /**
+     * With this methos one can set the lambda for matcher [[IKonveyorHandler.match]] having access to
+     * [[IKonveyorEnvironment]] through lambda parameter to the handler
+     */
+    fun onEnv(block: KonveyorMatcherType<T>)
 
+    /**
+     * Set up timeout for handlers and conveyors
+     */
+    fun timeout(block: KonveyorTimeoutType)
+
+    fun build(): IKonveyorHandler<T>
+
+    operator fun invoke(block: (IBaseBuilder<T>) -> Unit): IBaseBuilder<T> {
+        block(this)
+        return this
+    }
+}

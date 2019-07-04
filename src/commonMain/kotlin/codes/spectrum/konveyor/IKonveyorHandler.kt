@@ -16,6 +16,7 @@
  */
 package codes.spectrum.konveyor
 
-interface IKonveyorHandler<T>: IKonveyorExecutor<T> {
+interface IKonveyorHandler<T> {
     fun match(context: T, env: IKonveyorEnvironment = DefaultKonveyorEnvironment): Boolean
+    suspend fun exec(context: T, env: IKonveyorEnvironment = DefaultKonveyorEnvironment)
 }
