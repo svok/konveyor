@@ -1,3 +1,4 @@
+This project is archived in favor of https://github.com/crowdproj/kotlin-cor
 
 [ ![Download](https://api.bintray.com/packages/spectrum-project/konveyor/konveyor/images/download.svg?version=0.2.1) ](https://bintray.com/spectrum-project/konveyor/konveyor/0.2.1/link)
 
